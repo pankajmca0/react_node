@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Card, Progress, Row} from "antd";
+import './App.css';
+
 
 function App() {
 
