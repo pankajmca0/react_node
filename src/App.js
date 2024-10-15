@@ -1,54 +1,57 @@
-
-import './App.css';
-import {useState, useEffect} from "react";
+import React, {useEffect, useState} from "react";
+import {Card, Progress, Row} from "antd";
 
 function App() {
 
   const [listening, setListening] = useState(false);
-  const [data, setData] = useState([]);
+  const [data, setData] = useState({value: 0, target: 100});
   let eventSource = undefined;
 
   useEffect(() => {
     if (!listening) {
-      eventSource = new EventSource("http://localhost:8080/service/buyer/supplier/rest/v1.0/time");
+      eventSource = new EventSource("http://localhost:8080/service/buyer/supplier/rest/v1.0/run");
 
-      eventSource.onopen = (event) => {
-        console.log("connection opened")
-      }
-
-      eventSource.onmessage = (event) => {
-        console.log("result", event.data);
-        setData(old => [...old, event.data])
-      }
+      eventSource.addEventListener("Progress", (event) => {
+        const result = JSON.parse(event.data);
+        console.log("received:", result);
+        setData(result)
+      });
 
       eventSource.onerror = (event) => {
         console.log(event.target.readyState)
         if (event.target.readyState === EventSource.CLOSED) {
-          console.log('eventsource closed (' + event.target.readyState + ')')
+          console.log('SSE closed (' + event.target.readyState + ')')
         }
         eventSource.close();
       }
 
+      eventSource.onopen = (event) => {
+        console.log("connection opened")
+      }
       setListening(true);
     }
-
     return () => {
       eventSource.close();
-      console.log("eventsource closed")
+      console.log("event closed")
     }
 
   }, [])
 
   return (
-    <div className="App">
-      <header className="App-header">
-        Received Data
-        {data.map(d =>
-          <span key={d}>{d}</span>
-        )}
-      </header>
-    </div>
+
+    <>
+      <Card title="Progress Circle">
+        <Row justify="center">
+          <Progress type="circle" percent={data.value / data.target * 100}/>
+        </Row>
+      </Card>
+      <Card title="Progress Line">
+        <Row justify="center">
+          <Progress percent={data.value / data.target * 100} />
+        </Row>
+      </Card>
+    </>
+
+
   );
 }
-
-export default App;
